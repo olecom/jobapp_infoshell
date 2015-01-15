@@ -224,6 +224,19 @@ $(function() {
     log(message, {
       prepend: true
     });
+
+  socket.on('err pass', function (errname) {
+    var $errPage = $('.err.page');
+
+    username = '';
+    $loginPage.fadeOut();
+    $errPage.show();
+    setTimeout(function () {
+      $errPage.fadeOut();
+      $loginPage.show();
+      $errPage.off('click');
+      $currentInput = $usernameInput.focus();
+    }, 1024);
   });
 
   // Whenever the server emits 'new message', update the chat body

@@ -90,6 +90,14 @@ ul {
   color: #ff0000;
 }
 
+/* Error page */
+
+.err.page {
+  color: #ff0000;
+  display: none;
+  text-align: center;
+}
+
 /* Chat page */
 
 .chat.page {
