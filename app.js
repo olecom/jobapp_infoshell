@@ -59,7 +59,8 @@
     });
 
     // when the client emits 'add user', this listens and executes
-    socket.on('add user', function (username) {
+    socket.on('add user', function (username, password) {
+      con.log(password);
       // we store the username in the socket session for this client
       socket.username = username;
       // add the client's username to the global list
