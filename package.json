@@ -1,0 +1,12 @@
+{
+  "name": "infoshell_task",
+  "description": "job application testing task",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">= 0.10.0"
+  },
+  "dependencies": {
+    "socket.io": "*",
+    "mongodb": "*"
+  }
+}
