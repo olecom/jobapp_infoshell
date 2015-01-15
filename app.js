@@ -62,22 +62,74 @@
     var io = require('socket.io')(server);
     var usernames = {};
     var numUsers = 0;
+    var Users = api.db.getCollection('Users');
+
+    Users.ensureIndex({ u: 1 },{ unique: true  }, function(err) {
+      err && con.log('Users.ensureIndex(u):', err);
+    });
 
     io.on('connection', function (socket) {
       var addedUser = false;
 
       // when the client emits 'new message', this listens and executes
-      socket.on('new message', function (data) {
+      socket.on('new message', function (username, msg) {
         // we tell the client to execute 'new message'
         socket.broadcast.emit('new message', {
-          username: socket.username,
-          message: data
+          username: username,
+          message: msg
         });
       });
 
       // when the client emits 'add user', this listens and executes
-      socket.on('add user', function (username, password) {
-        con.log(password);
+      socket.on('add user', doAuth);
+
+      function doAuth(username, password) {
+        return Users.findOne(
+          { u: username },
+        function (err, uid){
+          if(err) return con.log('!Users.findOne:', err);
+
+          var time = new Date;
+
+          //con.log('uid:', uid);
+          //con.log('socket.id:', socket.id );
+          if(!uid){
+            uid = { u: username, p: password };
+            uid[socket.id] = time;
+            return Users.insert(uid,
+            function(err, sid){
+              if(err) return con.log('!Users.insert(new):', err);
+              return doLogin(sid[0].u, time);
+            });
+          }
+
+          if(uid.p === password){
+            if(uid[socket.id]){// old socket
+              con.log('== old sock ==');
+              con.log(uid);
+              return doLogin(username, uid[socket.id]);
+            }
+            // new socket
+            uid = { };
+            uid[socket.id] = time;
+            return Users.findAndModify(
+              { u: username },
+              [ ],// sort
+              { $set: uid },// update socket id time
+            function (err, sid){
+              if(err) return con.log('Users.findAndModify(add sock):', err);
+              con.log('== add sock ==');
+              con.log(sid);
+              return doLogin(sid.u, time);
+            });
+          }
+          // todo prevent brute force attack
+          socket.emit('err pass', username);
+        });
+      }
+
+      function doLogin(username, time) {
+        time = getClock(time);// => '[16:53:06]'
         // we store the username in the socket session for this client
         socket.username = username;
         // add the client's username to the global list
@@ -85,6 +137,7 @@
         ++numUsers;
         addedUser = true;
         socket.emit('login', {
+          time: time,
           numUsers: numUsers
         });
         // echo globally (all clients) that a person has connected
@@ -92,7 +145,7 @@
           username: socket.username,
           numUsers: numUsers
         });
-      });
+      }
 
       // when the client emits 'typing', we broadcast it to others
       socket.on('typing', function () {
@@ -114,11 +167,25 @@
         if (addedUser) {
           delete usernames[socket.username];
           --numUsers;
+          addedUser = false;
 
           // echo globally that this client has left
           socket.broadcast.emit('user left', {
             username: socket.username,
             numUsers: numUsers
+          });
+
+          var sock = { };
+          sock[socket.id] = 1;
+
+          return Users.findAndModify(
+            { u: socket.username },
+            [ ],// sort
+            { $unset: sock },// remove socket from user
+          function (err, uid) {
+            if(err) return con.log('Users.findAndModify(del sock):', err);
+            con.log(uid);
+            return;
           });
         }
       });
@@ -130,6 +197,15 @@
   }
 
   // ==== tools ====
+
+  function getClock(d){
+    function pad(n){ return n<10 ? '0'+n : n; }
+
+    return '[' +
+      pad(d.getUTCHours())+':'+
+      pad(d.getUTCMinutes())+':'+
+      pad(d.getUTCSeconds())+']';
+  }
 
   function sendHTMLFile(name, absolute, start, end){// simple static file sender
     return function sendFile(r__, res){
