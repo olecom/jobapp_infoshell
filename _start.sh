@@ -56,6 +56,12 @@ js(){
 }"
 }
 
+js_all(){
+    for i in *.js
+    do js "$i"
+    done
+}
+
 no_blanks(){
     echo '
 s/^[[:blank:]]*//
@@ -80,7 +86,7 @@ no_comments(){
 
 sed "
 `css style.css`
-`js main.js`
+`js_all`
 `js jquery-1.10.2.min.js ../www_modules/jquery-1.10.2.min.js`
 `js socket.io.js ../node_modules/socket.io/node_modules/socket.io-client/socket.io.js`
 " <index.html | sed "
