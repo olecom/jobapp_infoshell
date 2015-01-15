@@ -35,7 +35,11 @@
       /*  return require('send')(req, __dirname + '/client/index.htm')
            .on('error', function(err) { con.log('ERROR send:', err); })
            .pipe(res); */
-    };
+    }
+
+    if('/shutdown' == req.url && api){
+      return shutdown(res);
+    }
     return res.end();
   }
 
@@ -143,4 +147,32 @@
 
     };
   }
+
+  function shutdown(res){
+    var i, arr, code;
+
+    arr = api.shutdownHandlers;
+    for(i = 0; i < arr.length; ++i){
+      arr[i](next);
+    }
+    i = arr.length;
+    return (api = null);// prevent successive runs
+
+    function next(err, data){
+      err  && con.log('! end error at #' + (code = i) + '\n', err);
+      data && res.write(data) && res.write('\n');
+      if(0 === --i){
+        the_end(code, res);
+      }
+    }
+
+    function the_end(code, res){
+      proc.nextTick(function(){
+        con.log('$ application exit with code: ' + (code ? code : 0));
+        proc.exit(code ? code : 0);
+      });
+      return res.end();
+    }
+  }
+
 })(process, console);
