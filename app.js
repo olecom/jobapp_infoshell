@@ -261,11 +261,12 @@
     }
 
     function the_end(code, res){
+      i = '$ application exit with code: ' + (code ? code : 0)
       proc.nextTick(function(){
-        con.log('$ application exit with code: ' + (code ? code : 0));
+        con.log(i);
         proc.exit(code ? code : 0);
       });
-      return res.end();
+      return res.end(i);
     }
   }
 
