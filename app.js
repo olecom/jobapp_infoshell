@@ -4,6 +4,19 @@
 (function launchChatApp(proc, con){
   var server = require('http').createServer(resStatic);
   var fs = require('fs');
+  var api = {
+    db: null,
+    shutdownHandlers: [ ]// run all this functions before exit
+  };
+
+  // launch mongodb and connect to it then
+
+  require('./mongodb').launch(api,{
+    callback: runSocketIO,
+
+    db_path: __dirname + '/data/',
+    bin: __dirname + '/data/mongod'
+  });
 
   // server setup
 
@@ -19,7 +32,6 @@
 
   server.on('clientError', function http_client_error(err){
     con.log('ERROR in client connection: ', err);
-
   });
 
   server.listen(proc.env.NODE_PORT, function http_listen(){
@@ -45,6 +57,7 @@
 
   // ==== from socket.io example: Chatroom ====
 
+function runSocketIO(){
   // usernames which are currently connected to the chat
   var io = require('socket.io')(server);
   var usernames = {};
@@ -110,6 +123,11 @@
       }
     });
   });
+  con.log('Socket.io is ready to chat');
+  api.db.collectionNames(function(err ,arr){
+    con.log(err || arr);
+  });
+}
 
   // ==== tools ====
 
