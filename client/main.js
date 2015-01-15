@@ -227,7 +227,6 @@ $(function() {
 
   // Whenever the server emits 'login', log the login message
   socket.on('login', function (data) {
-    connected = true;
     // Display the welcome message
     var message = "Welcome to Socket.IO Chat – ";
     log(message, {
@@ -263,4 +262,18 @@ $(function() {
   socket.on('stop typing', function (data) {
     removeChatTyping(data);
   });
+
+  // Handle Connection States
+  socket.on('connect', function connectChat() {
+    connected = true;
+  });
+
+  socket.on('disconnect', function disconnectChat(data) {
+      username = '', connected = false;
+      $chatPage.fadeOut();
+      $loginPage.show();
+      $chatPage.off('click');
+      $currentInput = $usernameInput.focus();
+  });
+  socket.on('reconnect', setUsername);
 });
