@@ -5,6 +5,9 @@
   "engines": {
     "node": ">= 0.10.0"
   },
+  "scripts": {
+    "start": "sh _start.sh"
+  },
   "dependencies": {
     "socket.io": "*",
     "mongodb": "*"

@@ -30,9 +30,9 @@
     con.log(req.url);
 
     if('/' == req.url){
-      return sendHTMLFile('/client/index.html')(req, res);// manually crafted
+      return sendHTMLFile('/client/index.htm')(req, res);// manually crafted
       // or using `send` module:
-      /*  return require('send')(req, __dirname + '/client/index.html')
+      /*  return require('send')(req, __dirname + '/client/index.htm')
            .on('error', function(err) { con.log('ERROR send:', err); })
            .pipe(res); */
     };
