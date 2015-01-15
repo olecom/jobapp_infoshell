@@ -27,13 +27,7 @@ $(function() {
   var socket = io();
 
   function addParticipantsMessage (data) {
-    var message = '';
-    if (data.numUsers === 1) {
-      message += "there's 1 participant";
-    } else {
-      message += "there are " + data.numUsers + " participants";
-    }
-    log(message);
+    log('Active clients: ' + data.numUsers);
   }
 
   // Sets the client's username
@@ -230,7 +224,6 @@ $(function() {
     log(message, {
       prepend: true
     });
-    addParticipantsMessage(data);
   });
 
   // Whenever the server emits 'new message', update the chat body
