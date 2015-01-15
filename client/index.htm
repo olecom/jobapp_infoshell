@@ -3891,13 +3891,7 @@ var lastTypingTime;
 var $currentInput = $usernameInput.focus();
 var socket = io();
 function addParticipantsMessage (data) {
-var message = '';
-if (data.numUsers === 1) {
-message += "there's 1 participant";
-} else {
-message += "there are " + data.numUsers + " participants";
-}
-log(message);
+log('Active clients: ' + data.numUsers);
 }
 function setUsername () {
 username = cleanInput($usernameInput.val().trim());
@@ -4034,7 +4028,6 @@ var message = "Welcome to Socket.IO Chat – ";
 log(message, {
 prepend: true
 });
-addParticipantsMessage(data);
 });
 socket.on('new message', function (data) {
 addChatMessage(data);
