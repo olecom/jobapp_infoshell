@@ -34,13 +34,8 @@ $(function() {
   function setUsername () {
     username = cleanInput($usernameInput.val().trim());
 
-    // If the username is valid
+    // If the username not null
     if (username) {
-      $loginPage.fadeOut();
-      $chatPage.show();
-      $loginPage.off('click');
-      $currentInput = $inputMessage.focus();
-
       // Tell the server your username & password
       socket.emit('add user', username, $.SHA1.hash(cleanInput($passwordInput.val().trim())));
     }
@@ -59,7 +54,7 @@ $(function() {
         message: message
       });
       // tell server to execute 'new message' and send along one parameter
-      socket.emit('new message', message);
+      socket.emit('new message', username, message);
     }
   }
 
@@ -219,11 +214,18 @@ $(function() {
 
   // Whenever the server emits 'login', log the login message
   socket.on('login', function (data) {
+    username += data.time;
+    // Switch page
+    $loginPage.fadeOut();
+    $chatPage.show();
+    $loginPage.off('click');
+    $currentInput = $inputMessage.focus();
     // Display the welcome message
-    var message = "Welcome to Socket.IO Chat – ";
-    log(message, {
+    log("Dear, " + username + "! Welcome to Socket.IO Chat.", {
       prepend: true
     });
+    addParticipantsMessage(data);
+  });
 
   socket.on('err pass', function (errname) {
     var $errPage = $('.err.page');
