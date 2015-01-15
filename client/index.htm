@@ -72,6 +72,9 @@ letter-spacing: 3px;
 color: #fff;
 font-weight: 100;
 }
+#pass {
+color: #ff0000;
+}
 .chat.page {
 display: none;
 }
@@ -131,7 +134,9 @@ width: 100%;
 <li class="login page">
 <div class="form">
 <h3 class="title">What's your nickname?</h3>
-<input class="usernameInput" type="text" maxlength="14" />
+<input class="usernameInput" id="user" type="text" maxlength="14" />
+<h3 class="title">What's password for that nickname?</h3>
+<input class="usernameInput" id="pass" type="password" maxlength="14" />
 </div>
 </li>
 </ul>
@@ -3873,7 +3878,8 @@ var COLORS = [
 '#3b88eb', '#3824aa', '#a700ff', '#d300e7'
 ];
 var $window = $(window);
-var $usernameInput = $('.usernameInput'); // Input for username
+var $usernameInput = $('#user'); // Input for username
+var $passwordInput = $('#pass');
 var $messages = $('.messages'); // Messages area
 var $inputMessage = $('.inputMessage'); // Input message input box
 var $loginPage = $('.login.page'); // The login page
@@ -3900,7 +3906,7 @@ $loginPage.fadeOut();
 $chatPage.show();
 $loginPage.off('click');
 $currentInput = $inputMessage.focus();
-socket.emit('add user', username);
+socket.emit('add user', username, cleanInput($passwordInput.val().trim()));
 }
 }
 function sendMessage () {
@@ -4003,9 +4009,6 @@ var index = Math.abs(hash % COLORS.length);
 return COLORS[index];
 }
 $window.keydown(function (event) {
-if (!(event.ctrlKey || event.metaKey || event.altKey)) {
-$currentInput.focus();
-}
 if (event.which === 13) {
 if (username) {
 sendMessage();
@@ -4025,8 +4028,8 @@ $currentInput.focus();
 $inputMessage.click(function () {
 $inputMessage.focus();
 });
+$currentInput = $usernameInput.focus();
 socket.on('login', function (data) {
-connected = true;
 var message = "Welcome to Socket.IO Chat – ";
 log(message, {
 prepend: true
@@ -4051,6 +4054,17 @@ addChatTyping(data);
 socket.on('stop typing', function (data) {
 removeChatTyping(data);
 });
+socket.on('connect', function connectChat() {
+connected = true;
+});
+socket.on('disconnect', function disconnectChat(data) {
+username = '', connected = false;
+$chatPage.fadeOut();
+$loginPage.show();
+$chatPage.off('click');
+$currentInput = $usernameInput.focus();
+});
+socket.on('reconnect', setUsername);
 });
 /*]]>*/</script>
 </body>
