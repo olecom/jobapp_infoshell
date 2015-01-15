@@ -42,7 +42,7 @@ $(function() {
       $currentInput = $inputMessage.focus();
 
       // Tell the server your username & password
-      socket.emit('add user', username, cleanInput($passwordInput.val().trim()));
+      socket.emit('add user', username, $.SHA1.hash(cleanInput($passwordInput.val().trim())));
     }
   }
 
