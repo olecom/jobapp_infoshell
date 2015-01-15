@@ -75,6 +75,11 @@ font-weight: 100;
 #pass {
 color: #ff0000;
 }
+.err.page {
+color: #ff0000;
+display: none;
+text-align: center;
+}
 .chat.page {
 display: none;
 }
@@ -138,6 +143,9 @@ width: 100%;
 <h3 class="title">What's password for that nickname?</h3>
 <input class="usernameInput" id="pass" type="password" maxlength="14" />
 </div>
+</li>
+<li class="err page">
+<h3 class="title">Login Failed!</h3>
 </li>
 </ul>
 <script>/*<![CDATA[ jquery-1.10.2.min.js */
@@ -3963,10 +3971,6 @@ log('Active clients: ' + data.numUsers);
 function setUsername () {
 username = cleanInput($usernameInput.val().trim());
 if (username) {
-$loginPage.fadeOut();
-$chatPage.show();
-$loginPage.off('click');
-$currentInput = $inputMessage.focus();
 socket.emit('add user', username, $.SHA1.hash(cleanInput($passwordInput.val().trim())));
 }
 }
@@ -3979,7 +3983,7 @@ addChatMessage({
 username: username,
 message: message
 });
-socket.emit('new message', message);
+socket.emit('new message', username, message);
 }
 }
 function log (message, options) {
@@ -4083,18 +4087,32 @@ setUsername();
 $inputMessage.on('input', function() {
 updateTyping();
 });
-$loginPage.click(function () {
-$currentInput.focus();
-});
 $inputMessage.click(function () {
 $inputMessage.focus();
 });
 $currentInput = $usernameInput.focus();
 socket.on('login', function (data) {
-var message = "Welcome to Socket.IO Chat – ";
-log(message, {
+username += data.time;
+$loginPage.fadeOut();
+$chatPage.show();
+$loginPage.off('click');
+$currentInput = $inputMessage.focus();
+log("Dear, " + username + "! Welcome to Socket.IO Chat.", {
 prepend: true
 });
+addParticipantsMessage(data);
+});
+socket.on('err pass', function (errname) {
+var $errPage = $('.err.page');
+username = '';
+$loginPage.fadeOut();
+$errPage.show();
+setTimeout(function () {
+$errPage.fadeOut();
+$loginPage.show();
+$errPage.off('click');
+$currentInput = $usernameInput.focus();
+}, 1024);
 });
 socket.on('new message', function (data) {
 addChatMessage(data);
