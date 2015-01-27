@@ -1,4 +1,9 @@
 /*
+ * socket.io example chatroom with mongodb user accounting
+ * routes:
+ * '/'          => send '/client/index.htm'
+ * '/shutdown'  => clean shutdown of mongodb daemon and this server
+ * '/socket.io' => socket.io internal
  */
 
 (function launchChatApp(proc, con){
@@ -24,14 +29,14 @@
 
   server.on('error', function http_server_error(e){
     if('EADDRINUSE' == e.code){
-      con.log("FATAL: can't listen port (collision): " + proc.env.NODE_PORT);
+      con.log("!FATAL: can't listen port (collision): " + proc.env.NODE_PORT);
     } else {
-      con.log('ERROR in server: ', e);
+      con.log('!ERROR in server: ', e);
     }
   });
 
   server.on('clientError', function http_client_error(err){
-    con.log('ERROR in client connection: ', err);
+    con.log('!ERROR in client connection: ', err);
   });
 
   server.listen(proc.env.NODE_PORT, function http_listen(){
@@ -59,13 +64,20 @@
 
   function runSocketIO(){
     // usernames which are currently connected to the chat
-    var io = require('socket.io')(server);
+    var io;
     var usernames = {};
     var numUsers = 0;
     var Users = api.db.getCollection('Users');
 
+    try {
+      io = require('socket.io')(server);
+    } catch(ex){
+      con.log('!Installation error: run `npm install` to get needed node modules');
+      throw ex
+    }
+
     Users.ensureIndex({ u: 1 },{ unique: true  }, function(err) {
-      err && con.log('Users.ensureIndex(u):', err);
+      err && con.log('!Users.ensureIndex(u):', err);
     });
 
     io.on('connection', function (socket) {
@@ -96,9 +108,11 @@
           if(!uid){
             uid = { u: username, p: password };
             uid[socket.id] = time;
+
             return Users.insert(uid,
             function(err, sid){
               if(err) return con.log('!Users.insert(new):', err);
+
               return doLogin(sid[0].u, time);
             });
           }
@@ -117,7 +131,8 @@
               [ ],// sort
               { $set: uid },// update socket id time
             function (err, sid){
-              if(err) return con.log('Users.findAndModify(add sock):', err);
+              if(err) return con.log('!Users.findAndModify(add sock):', err);
+
               con.log('== add sock ==');
               con.log(sid);
               return doLogin(sid.u, time);
@@ -183,7 +198,8 @@
             [ ],// sort
             { $unset: sock },// remove socket from user
           function (err, uid) {
-            if(err) return con.log('Users.findAndModify(del sock):', err);
+            if(err) return con.log('!Users.findAndModify(del sock):', err);
+
             con.log(uid);
             return;
           });
@@ -191,7 +207,7 @@
       });
     });
     con.log('Socket.io is ready to chat');
-    api.db.collectionNames(function(err ,arr){
+    api.db.collectionNames(function(err, arr){
       con.log(err || arr);
     });
   }
@@ -218,7 +234,7 @@
         return fs.fstat(fd, function on_fstat(err, stat){
           if(err){
             res.statusCode = 500;
-            con.log('ERROR fs.stat:', err);
+            con.log('!fs.stat:', err);
             return res.end(err.code || String(err));
           }
           res.setHeader('Content-Length', stat.size);
@@ -230,12 +246,12 @@
       });
 
       fstream.on('error', function on_fstream_error(err){
-        con.log('ERROR send:', err);
+        con.log('!send:', err);
         return res.end('error sending html to you');
       });
 
       res.on('close', function(){
-        con.log('ERROR res close');
+        con.log('!unexpected: res close');
         return fstream.destroy();
       });
 
@@ -261,7 +277,7 @@
     }
 
     function the_end(code, res){
-      i = '$ application exit with code: ' + (code ? code : 0)
+      i = '$ application exit with code: ' + (code ? code : 0);
       proc.nextTick(function(){
         con.log(i);
         proc.exit(code ? code : 0);

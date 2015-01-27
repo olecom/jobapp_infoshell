@@ -22,13 +22,34 @@
  * `serverStatus.metrics.cursor.open.total` on db.close()
  */
 
-var mongodb = require('mongodb');
+var mongodb;
 // module data
 var mongod;// spawned daemon
 var db, api, cfg;
 var colls_cache = { };// collections which may have additional dynamic fields
 
-// API for Mongodb access
+try {
+  mongodb = require('mongodb');
+} catch(ex){
+  con.log('!Installation error: run `npm install` to get needed node modules');
+  throw ex
+}
+
+/* == API for Mongodb access ==
+ *
+ * launch/connect MongoDB binary with provided config then try to connect to it
+ * @param {hash} app_api glue hash connecting all used internal parts
+ * @param {hash} config db setup and connection settings
+ * Example:
+  require('./mongodb').launch/connect(api,{
+    callback: runSocketIO,
+
+    db_path: __dirname + '/data/',
+    bin: __dirname + '/data/mongod'
+  });
+  // finally
+  api.db -- is MongoClient connected to specified database
+ */
 var mongodbAPI = {
     client: null,// TODO?: setter, getter
     // methods
@@ -231,9 +252,7 @@ function end_with_mongodb(next){
       con.log('$ MongoDB shutdown data:', data ? data : err ? err : 'nothing');
       // `mongod` shuts down, thus it is not an error: connection closed
       return next(err && err.message != 'connection closed' ? err : void 0);
-    }
-    );
-  }
-  );
+    });
+  });
 }
 })(module, console);
